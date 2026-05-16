@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Test Cucaracha</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Courier New', monospace;
+    color: #eee;
+    gap: 20px;
+  }
+  h1 { color: #f0a500; letter-spacing: 4px; font-size: 1.4rem; }
+  canvas {
+    border: 2px solid #f0a50066;
+    background: #8B7355;
+  }
+  .controles {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 10px;
+    justify-content: center;
+  }
+  button {
+    padding: 10px 20px;
+    background: #2a2a4e;
+    border: 2px solid #f0a500;
+    color: #f0a500;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover, button.activo { background: #f0a500; color: #1a1a2e; }
+  .info {
+    font-size: 0.8rem;
+    color: #888;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .info span { color: #f0a500; }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  input[type=range] { width: 150px; accent-color: #f0a500; }
+</style>
+</head>
+<body>
+
+<h1>🪲 TEST CUCARACHA</h1>
+
+<canvas id="canvas" width="200" height="200"></canvas>
+
+<div class="controles">
+  <button onclick="setDir(0)" id="btn0" class="activo">↖ ARRIBA-IZQ</button>
+  <button onclick="setDir(1)" id="btn1">↗ ARRIBA-DER</button>
+  <button onclick="setDir(2)" id="btn2">↙ ABAJO-IZQ</button>
+  <button onclick="setDir(3)" id="btn3">↘ ABAJO-DER</button>
+</div>
+
+<label>
+  Velocidad:
+  <input type="range" id="velocidad" min="1" max="20" value="6">
+  <span id="velVal">6</span> fps
+</label>
+
+<div class="info">
+  Dirección activa: <span id="infoDir">↖ arriba-izq</span>
+</div>
+<div class="info" style="color:#555; font-size:0.75rem;">
+  Pon tu archivo <span style="color:#f0a500">cucaracha.png</span> en la misma carpeta
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// 1181 x 1181 dividido en 2 cols x 2 filas
+const FRAME_W = 1181 / 2;  // ~590
+const FRAME_H = 1181 / 2;  // ~590
+
+// Posición de cada dirección en el spritesheet:
+// fila 0 = arriba, fila 1 = abajo
+// col 0 = izquierda, col 1 = derecha
+// [col, fila]
+const DIRS = [
+  { col: 0, fila: 0, label: '↖ arriba-izq' },  // 0
+  { col: 1, fila: 0, label: '↗ arriba-der' },  // 1
+  { col: 0, fila: 1, label: '↙ abajo-izq'  },  // 2
+  { col: 1, fila: 1, label: '↘ abajo-der'  },  // 3
+];
+
+let dirActual = 0;
+let fps = 6;
+let ultimoTiempo = 0;
+
+const nombres = ['↖ arriba-izq', '↗ arriba-der', '↙ abajo-izq', '↘ abajo-der'];
+
+function setDir(d) {
+  dirActual = d;
+  document.getElementById('infoDir').textContent = nombres[d];
+  document.querySelectorAll('button').forEach((b, i) => {
+    b.classList.toggle('activo', i === d);
+  });
+}
+
+document.getElementById('velocidad').addEventListener('input', function() {
+  fps = parseInt(this.value);
+  document.getElementById('velVal').textContent = fps;
+});
+
+const img = new Image();
+img.src = 'cucarachas.png';
+
+img.onerror = () => {
+  ctx.fillStyle = '#f0a500';
+  ctx.font = '13px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚠️ No se encontró cucaracha.png', 100, 90);
+  ctx.fillStyle = '#888';
+  ctx.font = '11px Courier New';
+  ctx.fillText('Renombra tu archivo a cucaracha.png', 100, 115);
+  ctx.fillText('y ponlo en la misma carpeta', 100, 133);
+};
+
+function dibujar(timestamp) {
+  requestAnimationFrame(dibujar);
+  if (timestamp - ultimoTiempo < 1000 / fps) return;
+  ultimoTiempo = timestamp;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (img.complete && img.naturalWidth > 0) {
+    const d = DIRS[dirActual];
+    const sx = d.col * FRAME_W;
+    const sy = d.fila * FRAME_H;
+    // Dibujamos centrado y a buen tamaño en el canvas de 200x200
+    ctx.drawImage(img, sx, sy, FRAME_W, FRAME_H, 0, 0, 200, 200);
+  }
+}
+
+requestAnimationFrame(dibujar);
+</script>
+
+</body>
+</html>
